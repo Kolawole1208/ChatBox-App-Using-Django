@@ -909,6 +909,70 @@
         </div>
     </div>
 
+    <!-- Minimal customers UI -->
+    <div id="customers-ui" style="padding:18px;position:relative;z-index:5;">
+        <h3>Customers (from Azure via local proxy)</h3>
+        <div style="margin-bottom:12px;">
+            <button id="loadCustomersBtn" style="padding:8px 12px;">Load customers</button>
+            <button id="createSampleBtn" style="padding:8px 12px;margin-left:8px;">Create sample customer</button>
+            <button id="openSwaggerBtn" style="padding:8px 12px;margin-left:8px;">Open Backend Swagger</button>
+        </div>
+        <div id="customersContainer">No data yet</div>
+    </div>
+
+    <script>
+    const proxyBase = '/api/proxy/customers/'; // local proxy path
+
+    document.getElementById('openSwaggerBtn').addEventListener('click', () => {
+        window.open('https://operamadic-chatbox-bbgag9gudhegeeca.westeurope-01.azurewebsites.net/Swagger/index.html', '_blank', 'noopener');
+    });
+
+    async function loadCustomers() {
+        const out = document.getElementById('customersContainer');
+        out.textContent = 'Loading…';
+        try {
+            const res = await fetch(proxyBase, { method: 'GET', credentials: 'same-origin' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (!Array.isArray(data)) {
+                out.innerText = 'Unexpected response: see console';
+                console.log(data);
+                return;
+            }
+            out.innerHTML = data.length
+                ? data.map(c => `<div style="padding:6px;border-bottom:1px solid #eee;"><strong>${escapeHtml(c.name)}</strong> — ${escapeHtml(c.company||'')}</div>`).join('')
+                : '<div>No customers</div>';
+        } catch (err) {
+            out.innerText = 'Error loading customers: ' + err.message;
+            console.error(err);
+        }
+    }
+
+    async function createSampleCustomer() {
+        const out = document.getElementById('customersContainer');
+        out.textContent = 'Creating sample customer…';
+        try {
+            const res = await fetch(proxyBase, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'Sample User', company: 'Acme Ltd', email: 'sample@acme.test', status: 'warm' })
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const created = await res.json();
+            console.log('created', created);
+            await loadCustomers();
+        } catch (err) {
+            out.innerText = 'Error creating customer: ' + err.message;
+            console.error(err);
+        }
+    }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
+
+    document.getElementById('loadCustomersBtn').addEventListener('click', loadCustomers);
+    document.getElementById('createSampleBtn').addEventListener('click', createSampleCustomer);
+    </script>
+
     <script>
         // AI Chat Widget Toggle Logic
         const aiToggle = document.getElementById('aiToggle');

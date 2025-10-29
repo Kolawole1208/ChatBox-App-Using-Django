@@ -896,6 +896,7 @@
                 <div class="ai-suggestion" data-prompt="Show me sales trends for this quarter">Sales trends</div>
                 <div class="ai-suggestion" data-prompt="Which leads need follow-up?">Follow-up needed</div>
                 <div class="ai-suggestion" data-prompt="Analyze my pipeline performance">Pipeline analysis</div>
+                 <div class="ai-suggestion" data-prompt="Analyze my pipeline performance">tell me about this week sales</div>
             </div>
             <div class="ai-chat-input">
                 <input type="text" id="aiInput" placeholder="Ask about your CRM data...">
@@ -907,6 +908,19 @@
         <div class="ai-toggle" id="aiToggle">
             <i class="fas fa-robot"></i>
         </div>
+    </div>
+
+    <div style="position:fixed;right:20px;bottom:100px;z-index:999">
+        <button id="openSwaggerBtn" style="padding:10px 14px;border-radius:8px;background:#35675a;color:#fff;border:0;cursor:pointer;">
+            Open Backend Swagger
+        </button>
+        <button id="toggleSwaggerFrameBtn" style="padding:10px 14px;border-radius:8px;margin-left:8px;cursor:pointer;">
+            Toggle Swagger Frame
+        </button>
+    </div>
+
+    <div id="swaggerFrameContainer" style="display:none;position:fixed;right:20px;bottom:160px;width:900px;height:600px;z-index:998;border:1px solid #ddd;background:#fff;">
+        <iframe id="swaggerFrame" src="" style="width:100%;height:100%;border:0;"></iframe>
     </div>
 
     <script>
@@ -969,9 +983,68 @@
             aiMessages.appendChild(msg);
             aiMessages.scrollTop = aiMessages.scrollHeight;
         }
+
+        // Swagger UI Logic
+        const swaggerUrl = 'https://operamadic-chatbox-bbgag9gudhegeeca.westeurope-01.azurewebsites.net/Swagger/index.html';
+
+        document.getElementById('openSwaggerBtn').addEventListener('click', () => {
+            window.open(swaggerUrl, '_blank', 'noopener');
+        });
+
+        document.getElementById('toggleSwaggerFrameBtn').addEventListener('click', () => {
+            const container = document.getElementById('swaggerFrameContainer');
+            if (container.style.display === 'none') {
+                document.getElementById('swaggerFrame').src = swaggerUrl;
+                container.style.display = 'block';
+            } else {
+                document.getElementById('swaggerFrame').src = '';
+                container.style.display = 'none';
+            }
+        });
+
+const apiBase = 'https://operamadic-chatbox-bbgag9gudhegeeca.westeurope-01.azurewebsites.net'; // base of Azure backend
+
+async function listCustomers() {
+    const url = `${apiBase}/api/customers/`; // verify exact path in Swagger
+    try {
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                // add Authorization header if required: 'Authorization': 'Bearer <token>'
+            },
+            mode: 'cors' // make sure backend allows CORS
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        console.log('customers', data);
+        renderCustomerList(data);
+    } catch (err) {
+        console.error('API error', err);
+        alert('Failed to fetch customers: ' + err.message);
+    }
+}
+
+function renderCustomerList(customers) {
+    // simple example: append to a container in the dashboard
+    let container = document.getElementById('customersContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'customersContainer';
+        container.style.padding = '16px';
+        document.querySelector('.content-area').prepend(container);
+    }
+    container.innerHTML = '<h3>Customers (from Azure API)</h3>' + (customers.length ? customers.map(c => `<div>${c.name} — ${c.company || ''}</div>`).join('') : '<div>No customers</div>');
+}
+
+// call when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // listCustomers(); // uncomment to auto-call
+});
     </script>
+
+    <footer style="width:100%;text-align:center;padding:18px 0 12px 0;font-size:1rem;color:#888;background:#f7f9fa;position:fixed;bottom:0;left:0;z-index:10;">
+        CRM Dashboard v2.1 • © 2025 All rights reserved
+    </footer>
 </body>
-<footer style="width:100%;text-align:center;padding:18px 0 12px 0;font-size:1rem;color:#888;background:#f7f9fa;position:fixed;bottom:0;left:0;z-index:10;">
-    CRM Dashboard v2.1 • © 2025 All rights reserved
-</footer>
 </html>
